@@ -1,47 +1,110 @@
-import { useState } from 'react';
-import { TRIGRAMS } from './data/trigrams';
+import { useCallback, useState } from 'react';
 import type { Figure } from './data/types';
+import { type Deck, DECKS, deckById, isUnlocked, withUnlocks } from './logic/decks';
+import {
+  EMPTY_PROGRESS,
+  type Progress,
+  loadProgress,
+  mastery,
+  recordAnswer,
+  saveProgress,
+  weightOf,
+} from './logic/progress';
 import { type Answer, DIRECTIONS } from './logic/quiz';
 import { type Settings, loadSettings, saveSettings } from './logic/settings';
 import { type QuizConfig, QuizScreen } from './screens/QuizScreen';
-import { ResultScreen } from './screens/ResultScreen';
+import { ResultScreen, type SessionSummary } from './screens/ResultScreen';
 import { StartScreen } from './screens/StartScreen';
+
+interface SessionStart {
+  deck: Deck;
+  masteryBefore: number;
+  unlockedBefore: string[];
+}
 
 type Screen =
   | { name: 'start' }
-  | { name: 'quiz'; config: QuizConfig; run: number }
-  | { name: 'result'; answers: Answer[]; config: QuizConfig };
+  | { name: 'quiz'; config: QuizConfig; run: number; session: SessionStart }
+  | { name: 'result'; answers: Answer[]; summary: SessionSummary };
 
 export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
+  const [progress, setProgress] = useState<Progress>(loadProgress);
   const [screen, setScreen] = useState<Screen>({ name: 'start' });
+
+  const directions = DIRECTIONS.filter((d) => settings.directionIds.includes(d.id));
+  const selected = deckById(settings.deckId);
+  const deck = isUnlocked(selected, progress, settings.unlockAll) ? selected : DECKS[0];
 
   const updateSettings = (s: Settings) => {
     setSettings(s);
     saveSettings(s);
   };
 
-  const baseConfig = (): QuizConfig => ({
-    pool: TRIGRAMS,
-    all: TRIGRAMS,
-    directions: DIRECTIONS.filter((d) => settings.directionIds.includes(d.id)),
-    length: settings.length,
-  });
+  const updateProgress = (p: Progress) => {
+    setProgress(p);
+    saveProgress(p);
+  };
 
-  const startQuiz = (config: QuizConfig) => setScreen({ name: 'quiz', config, run: Date.now() });
+  const onAnswer = useCallback(
+    (a: Answer) =>
+      setProgress((p) => {
+        const next = withUnlocks(recordAnswer(p, a), DIRECTIONS.filter((d) => settings.directionIds.includes(d.id)));
+        saveProgress(next);
+        return next;
+      }),
+    [settings.directionIds],
+  );
+
+  const weight = useCallback((figureId: string, directionId: string) => weightOf(progress, figureId, directionId), [progress]);
+
+  const startQuiz = (pool: Figure[], length: number) =>
+    setScreen({
+      name: 'quiz',
+      config: { pool, all: deck.figures, directions, length },
+      run: Date.now(),
+      session: { deck, masteryBefore: mastery(progress, deck.figures, directions), unlockedBefore: progress.unlocked },
+    });
+
+  const startDeck = () => startQuiz(deck.figures, settings.length);
 
   const retryMistakes = (figures: Figure[]) =>
-    startQuiz({ ...baseConfig(), pool: figures, length: Math.min(settings.length, Math.max(5, figures.length * 3)) });
+    startQuiz(figures, Math.min(settings.length, Math.max(5, figures.length * 3)));
+
+  const finish = (answers: Answer[], session: SessionStart) =>
+    setScreen({
+      name: 'result',
+      answers,
+      summary: {
+        deckTitle: session.deck.title,
+        masteryBefore: session.masteryBefore,
+        masteryAfter: mastery(progress, session.deck.figures, directions),
+        newlyUnlocked: DECKS.filter(
+          (d) => progress.unlocked.includes(d.id) && !session.unlockedBefore.includes(d.id),
+        ).map((d) => d.title),
+      },
+    });
 
   switch (screen.name) {
     case 'start':
-      return <StartScreen settings={settings} onChange={updateSettings} onStart={() => startQuiz(baseConfig())} />;
+      return (
+        <StartScreen
+          settings={settings}
+          progress={progress}
+          deck={deck}
+          onChange={updateSettings}
+          onResetProgress={() => updateProgress(EMPTY_PROGRESS)}
+          onStart={startDeck}
+        />
+      );
     case 'quiz':
       return (
         <QuizScreen
           key={screen.run}
           config={screen.config}
-          onFinish={(answers) => setScreen({ name: 'result', answers, config: screen.config })}
+          weight={weight}
+          onAnswer={onAnswer}
+          onFinish={(answers) => finish(answers, screen.session)}
           onExit={() => setScreen({ name: 'start' })}
         />
       );
@@ -49,8 +112,9 @@ export default function App() {
       return (
         <ResultScreen
           answers={screen.answers}
+          summary={screen.summary}
           onRetryMistakes={retryMistakes}
-          onRestart={() => startQuiz(baseConfig())}
+          onRestart={startDeck}
           onMenu={() => setScreen({ name: 'start' })}
         />
       );

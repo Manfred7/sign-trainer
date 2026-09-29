@@ -14,7 +14,13 @@ export function FacetView({ figure, facet, glyphSize }: Props) {
     case 'image':
       return <FigureGlyph figure={figure} size={glyphSize} />;
     case 'name':
-      return <span className="facet-name">{figure.name}</span>;
+      // У гексаграмм есть совпадающие названия (Ли 10 и 30, И 27 и 42…) — различаем иероглифом
+      return (
+        <span className="facet-name">
+          {figure.name}
+          {figure.kind === 'hexagram' && <span className="hanzi facet-name__hanzi"> {figure.hanzi}</span>}
+        </span>
+      );
     case 'meaning':
       return <span className="facet-meaning">{meaningText(figure)}</span>;
   }

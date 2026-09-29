@@ -2,16 +2,27 @@ import { FigureFull } from '../components/FacetView';
 import type { Figure } from '../data/types';
 import { type Answer, isCorrect } from '../logic/quiz';
 
+export interface SessionSummary {
+  deckTitle: string;
+  masteryBefore: number;
+  masteryAfter: number;
+  /** Названия колод, открывшихся за эту сессию */
+  newlyUnlocked: string[];
+}
+
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+
 interface Props {
   answers: Answer[];
+  summary: SessionSummary;
   onRetryMistakes: (figures: Figure[]) => void;
   onRestart: () => void;
   onMenu: () => void;
 }
 
-export function ResultScreen({ answers, onRetryMistakes, onRestart, onMenu }: Props) {
+export function ResultScreen({ answers, summary, onRetryMistakes, onRestart, onMenu }: Props) {
   const right = answers.filter(isCorrect).length;
-  const pct = answers.length ? Math.round((right / answers.length) * 100) : 0;
+  const accuracy = answers.length ? right / answers.length : 0;
 
   const mistakes = new Map<string, { figure: Figure; count: number }>();
   for (const a of answers) {
@@ -26,10 +37,27 @@ export function ResultScreen({ answers, onRetryMistakes, onRestart, onMenu }: Pr
   return (
     <main className="screen result">
       <section className="result__score">
-        <div className="result__pct">{pct}%</div>
+        <div className="result__pct">{pct(accuracy)}</div>
         <p className="muted">
           {right} из {answers.length} верно
         </p>
+      </section>
+
+      <section className="panel result__mastery">
+        <div className="result__mastery-row">
+          <span>Освоено: {summary.deckTitle}</span>
+          <strong>
+            {pct(summary.masteryBefore)} → {pct(summary.masteryAfter)}
+          </strong>
+        </div>
+        <div className="bar">
+          <div className="bar__fill" style={{ width: pct(summary.masteryAfter) }} />
+        </div>
+        {summary.newlyUnlocked.map((title) => (
+          <p key={title} className="result__unlocked">
+            Открыта колода «{title}»
+          </p>
+        ))}
       </section>
 
       {hardest.length > 0 ? (

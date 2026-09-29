@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import { FacetView, FigureFull } from '../components/FacetView';
 import type { Figure } from '../data/types';
-import { type Answer, type Direction, type Question, makeQuestion } from '../logic/quiz';
+import { type Answer, type Direction, type Question, type Weight, makeQuestion } from '../logic/quiz';
 
 export interface QuizConfig {
   /** Из каких фигур спрашивать */
@@ -38,13 +38,16 @@ const AUTO_NEXT_MS = 800;
 
 interface Props {
   config: QuizConfig;
+  /** Вес пары для планировщика; берётся из текущего прогресса */
+  weight: Weight;
+  onAnswer: (answer: Answer) => void;
   onFinish: (answers: Answer[]) => void;
   onExit: () => void;
 }
 
-export function QuizScreen({ config, onFinish, onExit }: Props) {
+export function QuizScreen({ config, weight, onAnswer, onFinish, onExit }: Props) {
   const [state, dispatch] = useReducer(reducer, config, (c) => ({
-    current: makeQuestion(c.pool, c.all, c.directions),
+    current: makeQuestion(c.pool, c.all, c.directions, weight),
     pickedId: null,
     answers: [],
   }));
@@ -53,6 +56,15 @@ export function QuizScreen({ config, onFinish, onExit }: Props) {
   const revealed = pickedId !== null;
   const correct = pickedId === current.figure.id;
 
+  const answer = useCallback(
+    (id: string) => {
+      if (pickedId !== null) return;
+      dispatch({ type: 'answer', id });
+      onAnswer({ question: current, pickedId: id });
+    },
+    [pickedId, current, onAnswer],
+  );
+
   const next = useCallback(() => {
     if (answers.length >= config.length) {
       onFinish(answers);
@@ -60,9 +72,9 @@ export function QuizScreen({ config, onFinish, onExit }: Props) {
     }
     dispatch({
       type: 'next',
-      question: makeQuestion(config.pool, config.all, config.directions, current.figure.id),
+      question: makeQuestion(config.pool, config.all, config.directions, weight, current.figure.id),
     });
-  }, [answers, config, current.figure.id, onFinish]);
+  }, [answers, config, weight, current.figure.id, onFinish]);
 
   useEffect(() => {
     if (!revealed || !correct) return;
@@ -75,7 +87,7 @@ export function QuizScreen({ config, onFinish, onExit }: Props) {
       if (e.repeat) return;
       const n = Number(e.key);
       if (!revealed && n >= 1 && n <= current.options.length) {
-        dispatch({ type: 'answer', id: current.options[n - 1].id });
+        answer(current.options[n - 1].id);
       } else if (revealed && (e.key === 'Enter' || e.key === ' ')) {
         e.preventDefault();
         next();
@@ -83,7 +95,7 @@ export function QuizScreen({ config, onFinish, onExit }: Props) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [revealed, current, next]);
+  }, [revealed, current, next, answer]);
 
   const progress = answers.length / config.length;
   const answerIsImage = current.direction.answer === 'image';
@@ -134,7 +146,7 @@ export function QuizScreen({ config, onFinish, onExit }: Props) {
               key={opt.id}
               className={cls}
               disabled={revealed}
-              onClick={() => dispatch({ type: 'answer', id: opt.id })}
+              onClick={() => answer(opt.id)}
             >
               <span className="answer__key" aria-hidden>
                 {i + 1}

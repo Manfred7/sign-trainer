@@ -238,6 +238,106 @@ input:focus-visible {
   margin: -8px 0 0;
 }
 
+.panel__note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.btn--small {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  align-self: center;
+}
+
+.bar {
+  display: block;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bar--small {
+  height: 4px;
+  width: 56px;
+}
+.bar__fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.decks {
+  list-style: none;
+  margin: 0 -8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.deck {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+}
+.deck:hover:not(:disabled) {
+  background: var(--bg);
+}
+.deck.is-on {
+  border-color: var(--accent);
+  background: var(--bg);
+}
+.deck:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.deck__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.deck__title {
+  font-weight: 600;
+}
+.deck__sub {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.deck__progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+}
+.deck__pct {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.deck__lock {
+  flex: none;
+  font-size: 0.875rem;
+}
+
+.facet-name__hanzi {
+  font-size: 0.8em;
+  font-weight: 400;
+  color: var(--muted);
+}
+
 /* ---------- Тренировка ---------- */
 
 .quiz__top {
@@ -460,6 +560,22 @@ input:focus-visible {
   color: var(--bad);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.result__mastery-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9375rem;
+}
+.result__mastery-row strong {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.result__unlocked {
+  margin: 0;
+  color: var(--ok);
+  font-weight: 600;
 }
 
 /* ---------- Анимации ---------- */

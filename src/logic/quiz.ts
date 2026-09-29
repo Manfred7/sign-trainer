@@ -45,19 +45,28 @@ export function shuffle<T>(items: T[]): T[] {
 
 const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
 
+export type Weight = (figureId: string, directionId: string) => number;
+
 /**
  * pool — из каких фигур спрашивать, all — откуда брать неверные варианты.
+ * Пара (фигура, направление) выбирается пропорционально весу.
  * Одна фигура не выпадает дважды подряд, если в пуле есть из чего выбрать.
  */
 export function makeQuestion(
   pool: Figure[],
   all: Figure[],
   directions: Direction[],
+  weight: Weight,
   prevId?: string,
   optionCount = 4,
 ): Question {
-  const candidates = pool.length > 1 ? pool.filter((f) => f.id !== prevId) : pool;
-  const figure = pick(candidates);
+  const figures = pool.length > 1 ? pool.filter((f) => f.id !== prevId) : pool;
+  const pairs = figures.flatMap((figure) =>
+    directions.map((direction) => ({ figure, direction, w: weight(figure.id, direction.id) })),
+  );
+  let r = Math.random() * pairs.reduce((sum, p) => sum + p.w, 0);
+  const { figure, direction } = pairs.find((p) => (r -= p.w) < 0) ?? pick(pairs);
+
   const distractors = shuffle(all.filter((f) => f.id !== figure.id)).slice(0, optionCount - 1);
-  return { figure, direction: pick(directions), options: shuffle([figure, ...distractors]) };
+  return { figure, direction, options: shuffle([figure, ...distractors]) };
 }
