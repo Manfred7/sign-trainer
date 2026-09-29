@@ -13,4 +13,7 @@ export interface Figure {
   hanzi: string;
   /** Варианты перевода; в интерфейсе выводятся через « / » */
   meaning: string[];
+  /** id нижней и верхней триграмм, только для гексаграмм */
+  lower?: string;
+  upper?: string;
 }
