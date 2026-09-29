@@ -1,6 +1,15 @@
 import { DIRECTIONS } from './quiz';
 
+export type Mode = 'quiz' | 'study' | 'compose';
+
+export const MODES: { id: Mode; label: string }[] = [
+  { id: 'quiz', label: 'Тренировка' },
+  { id: 'study', label: 'Знакомство' },
+  { id: 'compose', label: 'Состав' },
+];
+
 export interface Settings {
+  mode: Mode;
   deckId: string;
   directionIds: string[];
   length: number;
@@ -13,6 +22,7 @@ export const SESSION_LENGTHS = [10, 20, 40];
 const KEY = 'sign-trainer:settings';
 
 const DEFAULTS: Settings = {
+  mode: 'quiz',
   deckId: 'trigrams',
   directionIds: ['image>meaning', 'meaning>image'],
   length: 20,
@@ -27,6 +37,7 @@ export function loadSettings(): Settings {
     const known = new Set(DIRECTIONS.map((d) => d.id));
     const directionIds = (parsed.directionIds ?? []).filter((id) => known.has(id));
     return {
+      mode: MODES.some((m) => m.id === parsed.mode) ? parsed.mode! : DEFAULTS.mode,
       deckId: typeof parsed.deckId === 'string' ? parsed.deckId : DEFAULTS.deckId,
       directionIds: directionIds.length ? directionIds : DEFAULTS.directionIds,
       length: SESSION_LENGTHS.includes(parsed.length ?? 0) ? parsed.length! : DEFAULTS.length,

@@ -10,3 +10,23 @@ export const TRIGRAMS: Figure[] = [
   { kind: 'trigram', id: 'gen', lines: [0, 0, 1], name: 'Гэнь', hanzi: '艮', meaning: ['Гора'] },
   { kind: 'trigram', id: 'kun', lines: [0, 0, 0], name: 'Кунь', hanzi: '坤', meaning: ['Земля'] },
 ];
+
+export const trigramById = (id: string) => TRIGRAMS.find((t) => t.id === id)!;
+
+/** Творительный падеж первого перевода — для подписи состава «Вода над Огнём» */
+const INSTRUMENTAL: Record<string, string> = {
+  qian: 'Небом',
+  dui: 'Водоёмом',
+  li: 'Огнём',
+  zhen: 'Громом',
+  xun: 'Ветром',
+  kan: 'Водой',
+  gen: 'Горой',
+  kun: 'Землёй',
+};
+
+/** «Вода над Огнём» для гексаграммы; null для триграммы */
+export function compositionText(f: { lower?: string; upper?: string }): string | null {
+  if (!f.lower || !f.upper) return null;
+  return `${trigramById(f.upper).meaning[0]} над ${INSTRUMENTAL[f.lower]}`;
+}

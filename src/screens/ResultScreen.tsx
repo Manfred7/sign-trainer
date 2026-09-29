@@ -66,7 +66,7 @@ export function ResultScreen({ answers, summary, onRetryMistakes, onRestart, onM
           <ul className="mistakes">
             {hardest.map(({ figure, count }) => (
               <li key={figure.id}>
-                <FigureFull figure={figure} glyphSize={44} />
+                <FigureFull figure={figure} glyphSize={44} showComposition={false} />
                 <span className="mistakes__count">×{count}</span>
               </li>
             ))}

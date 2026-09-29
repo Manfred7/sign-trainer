@@ -2,7 +2,8 @@ import { HEXAGRAMS } from '../data/hexagrams';
 import { TRIGRAMS } from '../data/trigrams';
 import type { Figure } from '../data/types';
 import { type Progress, UNLOCK_SHARE, mastery } from './progress';
-import type { Direction } from './quiz';
+import { COMPOSE_DIRECTION, type Direction } from './quiz';
+import type { Mode } from './settings';
 
 export interface Deck {
   id: string;
@@ -39,12 +40,34 @@ export const DECKS: Deck[] = [
     figures: byNumbers(eightFrom(from)),
     requires: i === 0 ? 'hex-doubled' : rangeId(RANGE_STARTS[i - 1]),
   })),
+  {
+    id: 'hex-all',
+    title: 'Все гексаграммы',
+    subtitle: '64 знака',
+    figures: HEXAGRAMS,
+    requires: rangeId(RANGE_STARTS[RANGE_STARTS.length - 1]),
+  },
 ];
 
 export const deckById = (id: string) => DECKS.find((d) => d.id === id) ?? DECKS[0];
 
 export const isUnlocked = (deck: Deck, p: Progress, unlockAll: boolean) =>
   unlockAll || !deck.requires || p.unlocked.includes(deck.id);
+
+/**
+ * Можно ли запустить колоду в этом режиме: знакомиться можно с любой,
+ * «Состав» не требует знания названий и открыт для всех гексаграмм,
+ * тренировка — по порогу.
+ */
+export function isAvailable(deck: Deck, mode: Mode, p: Progress, unlockAll: boolean) {
+  if (mode === 'study') return true;
+  if (mode === 'compose') return deck.id !== 'trigrams';
+  return isUnlocked(deck, p, unlockAll);
+}
+
+/** Направления, по которым считается освоение в режиме */
+export const modeDirections = (mode: Mode, selected: Direction[]) =>
+  mode === 'compose' ? [COMPOSE_DIRECTION] : selected;
 
 /** Открывает колоды, у которых предыдущая освоена на UNLOCK_SHARE */
 export function withUnlocks(p: Progress, directions: Direction[]): Progress {

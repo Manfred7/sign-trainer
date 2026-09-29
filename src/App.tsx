@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { Figure } from './data/types';
-import { type Deck, DECKS, deckById, isUnlocked, withUnlocks } from './logic/decks';
+import { type Deck, DECKS, deckById, isAvailable, modeDirections, withUnlocks } from './logic/decks';
 import {
   EMPTY_PROGRESS,
   type Progress,
@@ -11,12 +11,15 @@ import {
   weightOf,
 } from './logic/progress';
 import { type Answer, DIRECTIONS } from './logic/quiz';
-import { type Settings, loadSettings, saveSettings } from './logic/settings';
+import { type Mode, type Settings, loadSettings, saveSettings } from './logic/settings';
+import { ComposeScreen } from './screens/ComposeScreen';
 import { type QuizConfig, QuizScreen } from './screens/QuizScreen';
 import { ResultScreen, type SessionSummary } from './screens/ResultScreen';
 import { StartScreen } from './screens/StartScreen';
+import { StudyScreen } from './screens/StudyScreen';
 
 interface SessionStart {
+  mode: Mode;
   deck: Deck;
   masteryBefore: number;
   unlockedBefore: string[];
@@ -24,6 +27,7 @@ interface SessionStart {
 
 type Screen =
   | { name: 'start' }
+  | { name: 'study'; deck: Deck }
   | { name: 'quiz'; config: QuizConfig; run: number; session: SessionStart }
   | { name: 'result'; answers: Answer[]; summary: SessionSummary };
 
@@ -32,9 +36,12 @@ export default function App() {
   const [progress, setProgress] = useState<Progress>(loadProgress);
   const [screen, setScreen] = useState<Screen>({ name: 'start' });
 
-  const directions = DIRECTIONS.filter((d) => settings.directionIds.includes(d.id));
+  const selectedDirections = DIRECTIONS.filter((d) => settings.directionIds.includes(d.id));
+  const directions = modeDirections(settings.mode, selectedDirections);
+  const available = (d: Deck) => isAvailable(d, settings.mode, progress, settings.unlockAll);
   const selected = deckById(settings.deckId);
-  const deck = isUnlocked(selected, progress, settings.unlockAll) ? selected : DECKS[0];
+  // Если выбранная колода недоступна в текущем режиме — берём первую доступную
+  const deck = available(selected) ? selected : DECKS.find(available)!;
 
   const updateSettings = (s: Settings) => {
     setSettings(s);
@@ -49,24 +56,36 @@ export default function App() {
   const onAnswer = useCallback(
     (a: Answer) =>
       setProgress((p) => {
-        const next = withUnlocks(recordAnswer(p, a), DIRECTIONS.filter((d) => settings.directionIds.includes(d.id)));
+        const next = withUnlocks(
+          recordAnswer(p, a),
+          DIRECTIONS.filter((d) => settings.directionIds.includes(d.id)),
+        );
         saveProgress(next);
         return next;
       }),
     [settings.directionIds],
   );
 
-  const weight = useCallback((figureId: string, directionId: string) => weightOf(progress, figureId, directionId), [progress]);
+  const weight = useCallback(
+    (figureId: string, directionId: string) => weightOf(progress, figureId, directionId),
+    [progress],
+  );
 
   const startQuiz = (pool: Figure[], length: number) =>
     setScreen({
       name: 'quiz',
       config: { pool, all: deck.figures, directions, length },
       run: Date.now(),
-      session: { deck, masteryBefore: mastery(progress, deck.figures, directions), unlockedBefore: progress.unlocked },
+      session: {
+        mode: settings.mode,
+        deck,
+        masteryBefore: mastery(progress, deck.figures, directions),
+        unlockedBefore: progress.unlocked,
+      },
     });
 
-  const startDeck = () => startQuiz(deck.figures, settings.length);
+  const startDeck = () =>
+    settings.mode === 'study' ? setScreen({ name: 'study', deck }) : startQuiz(deck.figures, settings.length);
 
   const retryMistakes = (figures: Figure[]) =>
     startQuiz(figures, Math.min(settings.length, Math.max(5, figures.length * 3)));
@@ -97,9 +116,12 @@ export default function App() {
           onStart={startDeck}
         />
       );
-    case 'quiz':
+    case 'study':
+      return <StudyScreen deck={screen.deck} onExit={() => setScreen({ name: 'start' })} />;
+    case 'quiz': {
+      const SessionScreen = screen.session.mode === 'compose' ? ComposeScreen : QuizScreen;
       return (
-        <QuizScreen
+        <SessionScreen
           key={screen.run}
           config={screen.config}
           weight={weight}
@@ -108,6 +130,7 @@ export default function App() {
           onExit={() => setScreen({ name: 'start' })}
         />
       );
+    }
     case 'result':
       return (
         <ResultScreen

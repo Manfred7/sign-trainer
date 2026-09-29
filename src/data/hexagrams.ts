@@ -1,4 +1,4 @@
-import { TRIGRAMS } from './trigrams';
+import { trigramById } from './trigrams';
 import type { Figure, Line } from './types';
 
 type TrigramId = 'qian' | 'dui' | 'li' | 'zhen' | 'xun' | 'kan' | 'gen' | 'kun';
@@ -81,8 +81,6 @@ const SOURCE: HexagramSource[] = [
   { number: 64, name: 'Вэй цзи', hanzi: '未濟', meaning: ['Ещё не справились'], upper: 'li', lower: 'kan' },
 ];
 
-const trigram = (id: TrigramId) => TRIGRAMS.find((t) => t.id === id)!;
-
 export const HEXAGRAMS: Figure[] = SOURCE.map((h) => ({
   kind: 'hexagram',
   id: `hex-${h.number}`,
@@ -92,5 +90,5 @@ export const HEXAGRAMS: Figure[] = SOURCE.map((h) => ({
   meaning: h.meaning,
   lower: h.lower,
   upper: h.upper,
-  lines: [...trigram(h.lower).lines, ...trigram(h.upper).lines] as Line[],
+  lines: [...trigramById(h.lower).lines, ...trigramById(h.upper).lines] as Line[],
 }));

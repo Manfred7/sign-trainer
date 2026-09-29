@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import { FacetView, FigureFull } from '../components/FacetView';
+import { SessionTop } from '../components/SessionTop';
 import type { Figure } from '../data/types';
-import { type Answer, type Direction, type Question, type Weight, makeQuestion } from '../logic/quiz';
+import { type Answer, type Direction, type Question, type Weight, makeQuestion, unseenFirst } from '../logic/quiz';
 
 export interface QuizConfig {
   /** Из каких фигур спрашивать */
@@ -72,7 +73,13 @@ export function QuizScreen({ config, weight, onAnswer, onFinish, onExit }: Props
     }
     dispatch({
       type: 'next',
-      question: makeQuestion(config.pool, config.all, config.directions, weight, current.figure.id),
+      question: makeQuestion(
+        unseenFirst(config.pool, answers),
+        config.all,
+        config.directions,
+        weight,
+        current.figure.id,
+      ),
     });
   }, [answers, config, weight, current.figure.id, onFinish]);
 
@@ -97,22 +104,11 @@ export function QuizScreen({ config, weight, onAnswer, onFinish, onExit }: Props
     return () => window.removeEventListener('keydown', onKey);
   }, [revealed, current, next, answer]);
 
-  const progress = answers.length / config.length;
   const answerIsImage = current.direction.answer === 'image';
 
   return (
     <main className="screen quiz">
-      <div className="quiz__top">
-        <button className="icon-btn" onClick={onExit} aria-label="В меню">
-          ←
-        </button>
-        <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={config.length} aria-valuenow={answers.length}>
-          <div className="progress__fill" style={{ width: `${progress * 100}%` }} />
-        </div>
-        <span className="quiz__count">
-          {answers.length}/{config.length}
-        </span>
-      </div>
+      <SessionTop done={answers.length} total={config.length} onExit={onExit} />
 
       <section
         key={answers.length - (revealed ? 1 : 0)}
@@ -142,18 +138,21 @@ export function QuizScreen({ config, weight, onAnswer, onFinish, onExit }: Props
             else cls += ' answer--dim';
           }
           return (
-            <button
-              key={opt.id}
-              className={cls}
-              disabled={revealed}
-              onClick={() => answer(opt.id)}
-            >
+            <button key={opt.id} className={cls} disabled={revealed} onClick={() => answer(opt.id)}>
               <span className="answer__key" aria-hidden>
                 {i + 1}
               </span>
               <FacetView figure={opt} facet={current.direction.answer} glyphSize={56} />
-              {revealed && isRight && <span className="answer__mark" aria-label="верно">✓</span>}
-              {revealed && isPicked && !isRight && <span className="answer__mark" aria-label="неверно">✗</span>}
+              {revealed && isRight && (
+                <span className="answer__mark" aria-label="верно">
+                  ✓
+                </span>
+              )}
+              {revealed && isPicked && !isRight && (
+                <span className="answer__mark" aria-label="неверно">
+                  ✗
+                </span>
+              )}
             </button>
           );
         })}

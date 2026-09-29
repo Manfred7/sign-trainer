@@ -19,6 +19,15 @@ export const DIRECTIONS: Direction[] = [
   { id: 'meaning>name', ask: 'meaning', answer: 'name', label: 'Перевод → Название', prompt: 'Как называется?' },
 ];
 
+/** Режим «Состав»: по изображению гексаграммы назвать её триграммы. В общий список направлений не входит. */
+export const COMPOSE_DIRECTION: Direction = {
+  id: 'compose',
+  ask: 'image',
+  answer: 'image',
+  label: 'Состав',
+  prompt: 'Из каких триграмм состоит?',
+};
+
 export interface Question {
   figure: Figure;
   direction: Direction;
@@ -46,6 +55,13 @@ export function shuffle<T>(items: T[]): T[] {
 const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
 
 export type Weight = (figureId: string, directionId: string) => number;
+
+/** Пока в сессии есть непоказанные знаки, спрашиваем из них — чтобы каждый выпал хотя бы раз */
+export function unseenFirst(pool: Figure[], answers: Answer[]): Figure[] {
+  const shown = new Set(answers.map((a) => a.question.figure.id));
+  const fresh = pool.filter((f) => !shown.has(f.id));
+  return fresh.length ? fresh : pool;
+}
 
 /**
  * pool — из каких фигур спрашивать, all — откуда брать неверные варианты.
