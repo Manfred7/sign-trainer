@@ -624,6 +624,101 @@ input:focus-visible {
   color: var(--bad);
 }
 
+/* Сборка */
+.build-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.build-target__name {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 600;
+}
+.build-target__name .hanzi {
+  color: var(--accent);
+}
+.build-target__meaning {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: var(--muted);
+}
+.card--builder {
+  min-height: 200px;
+}
+
+.builder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+.builder__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.builder__row:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+.builder__row:disabled {
+  cursor: default;
+}
+.builder__row--split {
+  margin-top: 10px;
+}
+.builder__row--ok {
+  background: var(--ok-bg);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.builder__row--bad {
+  background: var(--bad-bg);
+  border-color: var(--bad);
+  color: var(--bad);
+  animation: shake 0.35s ease-in-out;
+}
+.builder__num {
+  width: 1em;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.builder__line {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  height: 14px;
+}
+.builder__line span {
+  flex: 1;
+  background: currentColor;
+  border-radius: 2px;
+  transition: margin 0.12s;
+}
+.builder__line span:first-child {
+  border-radius: 2px 0 0 2px;
+}
+.builder__line span:last-child {
+  border-radius: 0 2px 2px 0;
+}
+.builder__line--yin {
+  gap: 16%;
+}
+.builder__line--yin span {
+  border-radius: 2px;
+}
+
+.segmented--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 /* ---------- Итоги ---------- */
 
 .result__score {

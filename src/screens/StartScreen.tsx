@@ -1,9 +1,9 @@
 import { FigureGlyph } from '../components/FigureGlyph';
 import { TRIGRAMS } from '../data/trigrams';
-import { type Deck, DECKS, isAvailable, modeDirections } from '../logic/decks';
+import { type Deck, DECKS, buildInputFor, isAvailable, modeDirections } from '../logic/decks';
 import { type Progress, UNLOCK_SHARE, mastery } from '../logic/progress';
 import { DIRECTIONS } from '../logic/quiz';
-import { MODES, SESSION_LENGTHS, type Settings } from '../logic/settings';
+import { type BuildInput, MODES, SESSION_LENGTHS, type Settings } from '../logic/settings';
 
 interface Props {
   settings: Settings;
@@ -21,12 +21,19 @@ const MODE_NOTES = {
   quiz: 'Карточка и четыре варианта ответа.',
   study: 'Листайте карточки со всеми представлениями знака, без проверки.',
   compose: 'Определите, из каких триграмм сложена гексаграмма: сначала нижнюю, потом верхнюю.',
+  build: 'По названию и переводу соберите знак: из двух триграмм или по линиям.',
 } as const;
+
+const BUILD_INPUTS: { id: BuildInput; label: string }[] = [
+  { id: 'trigrams', label: 'Из триграмм' },
+  { id: 'lines', label: 'По линиям' },
+];
 
 export function StartScreen({ settings, progress, deck, onChange, onResetProgress, onStart }: Props) {
   const { mode } = settings;
   const selectedDirections = DIRECTIONS.filter((d) => settings.directionIds.includes(d.id));
-  const directions = modeDirections(mode, selectedDirections);
+  const directionsFor = (d: Deck) => modeDirections(mode, selectedDirections, buildInputFor(d, settings.buildInput));
+  const directions = directionsFor(deck);
   const toggle = (id: string) => {
     const has = settings.directionIds.includes(id);
     const directionIds = has ? settings.directionIds.filter((d) => d !== id) : [...settings.directionIds, id];
@@ -73,7 +80,7 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
       <section className="panel">
         <div className="panel__head">
           <h2>Колода</h2>
-          {mode === 'quiz' && (
+          {(mode === 'quiz' || mode === 'build') && (
             <button className="link" onClick={() => onChange({ ...settings, unlockAll: !settings.unlockAll })}>
               {settings.unlockAll ? 'Открывать по порядку' : 'Открыть все'}
             </button>
@@ -82,7 +89,7 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
         <ul className="decks" role="radiogroup" aria-label="Колода">
           {DECKS.map((d) => {
             const open = isAvailable(d, mode, progress, settings.unlockAll);
-            const m = mastery(progress, d.figures, directions);
+            const m = mastery(progress, d.figures, directionsFor(d));
             const on = d.id === deck.id;
             return (
               <li key={d.id}>
@@ -121,6 +128,26 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
           })}
         </ul>
       </section>
+
+      {mode === 'build' && (
+        <section className="panel">
+          <h2>Ввод</h2>
+          <div className="segmented segmented--2" role="radiogroup" aria-label="Ввод">
+            {BUILD_INPUTS.map((b) => (
+              <button
+                key={b.id}
+                role="radio"
+                aria-checked={settings.buildInput === b.id}
+                className={settings.buildInput === b.id ? 'is-on' : ''}
+                onClick={() => onChange({ ...settings, buildInput: b.id })}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+          <p className="panel__note">Триграммы всегда собираются по линиям. Прогресс у двух способов отдельный.</p>
+        </section>
+      )}
 
       {mode === 'quiz' && (
         <section className="panel">

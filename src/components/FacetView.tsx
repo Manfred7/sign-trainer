@@ -28,6 +28,19 @@ export function FacetView({ figure, facet, glyphSize }: Props) {
   }
 }
 
+/** Что нужно собрать в режиме «Сборка»: номер, название, иероглиф, перевод */
+export function BuildTarget({ figure }: { figure: Figure }) {
+  return (
+    <div className="build-target">
+      <div className="build-target__name">
+        {figure.number !== undefined && <span className="figure-full__num">{figure.number} · </span>}
+        {figure.name} <span className="hanzi">{figure.hanzi}</span>
+      </div>
+      <div className="build-target__meaning">{meaningText(figure)}</div>
+    </div>
+  );
+}
+
 interface FullProps {
   figure: Figure;
   glyphSize?: number;

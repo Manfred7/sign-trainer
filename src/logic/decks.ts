@@ -2,8 +2,8 @@ import { HEXAGRAMS } from '../data/hexagrams';
 import { TRIGRAMS } from '../data/trigrams';
 import type { Figure } from '../data/types';
 import { type Progress, UNLOCK_SHARE, mastery } from './progress';
-import { COMPOSE_DIRECTION, type Direction } from './quiz';
-import type { Mode } from './settings';
+import { BUILD_DIRECTION, BUILD_LINES_DIRECTION, COMPOSE_DIRECTION, type Direction } from './quiz';
+import type { BuildInput, Mode } from './settings';
 
 export interface Deck {
   id: string;
@@ -65,9 +65,15 @@ export function isAvailable(deck: Deck, mode: Mode, p: Progress, unlockAll: bool
   return isUnlocked(deck, p, unlockAll);
 }
 
+/** Триграмму из триграмм не собрать — для неё сборка всегда по линиям */
+export const buildInputFor = (deck: Deck, input: BuildInput): BuildInput => (deck.id === 'trigrams' ? 'lines' : input);
+
 /** Направления, по которым считается освоение в режиме */
-export const modeDirections = (mode: Mode, selected: Direction[]) =>
-  mode === 'compose' ? [COMPOSE_DIRECTION] : selected;
+export function modeDirections(mode: Mode, selected: Direction[], buildInput: BuildInput): Direction[] {
+  if (mode === 'compose') return [COMPOSE_DIRECTION];
+  if (mode === 'build') return [buildInput === 'lines' ? BUILD_LINES_DIRECTION : BUILD_DIRECTION];
+  return selected;
+}
 
 /** Открывает колоды, у которых предыдущая освоена на UNLOCK_SHARE */
 export function withUnlocks(p: Progress, directions: Direction[]): Progress {

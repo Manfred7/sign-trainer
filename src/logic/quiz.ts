@@ -33,6 +33,24 @@ export const COMPOSE_DIRECTION: Direction = {
   prompt: 'Из каких триграмм состоит?',
 };
 
+/** Режим «Сборка»: по названию собрать гексаграмму из двух триграмм */
+export const BUILD_DIRECTION: Direction = {
+  id: 'build',
+  ask: 'name',
+  answer: 'image',
+  label: 'Сборка из триграмм',
+  prompt: 'Соберите из триграмм',
+};
+
+/** Режим «Сборка»: по названию собрать знак по линиям */
+export const BUILD_LINES_DIRECTION: Direction = {
+  id: 'build-lines',
+  ask: 'name',
+  answer: 'image',
+  label: 'Сборка по линиям',
+  prompt: 'Соберите по линиям',
+};
+
 export interface Question {
   figure: Figure;
   direction: Direction;
@@ -57,7 +75,7 @@ export function shuffle<T>(items: T[]): T[] {
   return a;
 }
 
-const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
+const pick = <T>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
 
 /** Уровень пары (знак × направление) по текущему прогрессу */
 export type LevelOf = (figureId: string, directionId: string) => number;

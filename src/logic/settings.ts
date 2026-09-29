@@ -1,11 +1,13 @@
 import { DIRECTIONS } from './quiz';
 
-export type Mode = 'quiz' | 'study' | 'compose';
+export type Mode = 'quiz' | 'study' | 'compose' | 'build';
+export type BuildInput = 'trigrams' | 'lines';
 
 export const MODES: { id: Mode; label: string }[] = [
   { id: 'quiz', label: 'Тренировка' },
   { id: 'study', label: 'Знакомство' },
   { id: 'compose', label: 'Состав' },
+  { id: 'build', label: 'Сборка' },
 ];
 
 export interface Settings {
@@ -15,6 +17,7 @@ export interface Settings {
   length: number;
   /** Все колоды доступны сразу, без порога */
   unlockAll: boolean;
+  buildInput: BuildInput;
 }
 
 export const SESSION_LENGTHS = [10, 20, 40];
@@ -27,6 +30,7 @@ const DEFAULTS: Settings = {
   directionIds: ['image>meaning', 'meaning>image'],
   length: 20,
   unlockAll: false,
+  buildInput: 'trigrams',
 };
 
 export function loadSettings(): Settings {
@@ -42,6 +46,7 @@ export function loadSettings(): Settings {
       directionIds: directionIds.length ? directionIds : DEFAULTS.directionIds,
       length: SESSION_LENGTHS.includes(parsed.length ?? 0) ? parsed.length! : DEFAULTS.length,
       unlockAll: parsed.unlockAll === true,
+      buildInput: parsed.buildInput === 'lines' ? 'lines' : 'trigrams',
     };
   } catch {
     return DEFAULTS;

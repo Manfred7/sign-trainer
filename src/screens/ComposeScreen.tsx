@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useReducer } from 'react';
-import { FigureFull } from '../components/FacetView';
+import { BuildTarget, FigureFull } from '../components/FacetView';
 import { FigureGlyph } from '../components/FigureGlyph';
 import { SessionTop } from '../components/SessionTop';
 import { HEXAGRAMS } from '../data/hexagrams';
 import { TRIGRAMS, trigramById } from '../data/trigrams';
 import type { Figure } from '../data/types';
-import { type Answer, COMPOSE_DIRECTION, type LevelOf, makeQuestion, unseenFirst } from '../logic/quiz';
+import {
+  type Answer,
+  BUILD_DIRECTION,
+  COMPOSE_DIRECTION,
+  type Direction,
+  type LevelOf,
+  makeQuestion,
+  unseenFirst,
+} from '../logic/quiz';
 import type { QuizConfig } from './QuizScreen';
 
 interface State {
@@ -15,7 +23,7 @@ interface State {
   answers: Answer[];
 }
 
-type Action = { type: 'pick'; id: string } | { type: 'next'; figure: Figure };
+type Action = { type: 'pick'; id: string; direction: Direction } | { type: 'next'; figure: Figure };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -25,7 +33,7 @@ function reducer(state: State, action: Action): State {
         return {
           ...state,
           upper: action.id,
-          answers: [...state.answers, toAnswer(state.current, state.lower, action.id)],
+          answers: [...state.answers, toAnswer(state.current, state.lower, action.id, action.direction)],
         };
       }
       return state;
@@ -38,14 +46,16 @@ function reducer(state: State, action: Action): State {
  * Ответ записывается как обычный выбор: «выбранной» считается гексаграмма,
  * собранная из указанных триграмм. Верно — если она совпала с загаданной.
  */
-function toAnswer(figure: Figure, lower: string, upper: string): Answer {
+function toAnswer(figure: Figure, lower: string, upper: string, direction: Direction): Answer {
   const picked = HEXAGRAMS.find((h) => h.lower === lower && h.upper === upper)!;
-  return { question: { figure, direction: COMPOSE_DIRECTION, options: [] }, pickedId: picked.id };
+  return { question: { figure, direction, options: [] }, pickedId: picked.id };
 }
 
 const AUTO_NEXT_MS = 1000;
 
 interface Props {
+  /** compose — по изображению назвать триграммы; build — по названию собрать из триграмм */
+  variant: 'compose' | 'build';
   config: QuizConfig;
   levelOf: LevelOf;
   onAnswer: (answer: Answer) => void;
@@ -53,9 +63,9 @@ interface Props {
   onExit: () => void;
 }
 
-export function ComposeScreen({ config, levelOf, onAnswer, onFinish, onExit }: Props) {
-  const nextFigure = (prevId?: string) =>
-    makeQuestion(config.pool, config.all, [COMPOSE_DIRECTION], levelOf, prevId).figure;
+export function ComposeScreen({ variant, config, levelOf, onAnswer, onFinish, onExit }: Props) {
+  const direction = variant === 'compose' ? COMPOSE_DIRECTION : BUILD_DIRECTION;
+  const nextFigure = (prevId?: string) => makeQuestion(config.pool, config.all, [direction], levelOf, prevId).figure;
 
   const [state, dispatch] = useReducer(reducer, null, () => ({
     current: nextFigure(),
@@ -73,10 +83,10 @@ export function ComposeScreen({ config, levelOf, onAnswer, onFinish, onExit }: P
   const pick = useCallback(
     (id: string) => {
       if (step === 'done') return;
-      dispatch({ type: 'pick', id });
-      if (step === 'upper') onAnswer(toAnswer(current, lower!, id));
+      dispatch({ type: 'pick', id, direction });
+      if (step === 'upper') onAnswer(toAnswer(current, lower!, id, direction));
     },
-    [step, current, lower, onAnswer],
+    [step, current, lower, onAnswer, direction],
   );
 
   const next = useCallback(() => {
@@ -86,10 +96,9 @@ export function ComposeScreen({ config, levelOf, onAnswer, onFinish, onExit }: P
     }
     dispatch({
       type: 'next',
-      figure: makeQuestion(unseenFirst(config.pool, answers), config.all, [COMPOSE_DIRECTION], levelOf, current.id)
-        .figure,
+      figure: makeQuestion(unseenFirst(config.pool, answers), config.all, [direction], levelOf, current.id).figure,
     });
-  }, [answers, config, levelOf, current.id, onFinish]);
+  }, [answers, config, direction, levelOf, current.id, onFinish]);
 
   useEffect(() => {
     if (!correct) return;
@@ -135,7 +144,11 @@ export function ComposeScreen({ config, levelOf, onAnswer, onFinish, onExit }: P
         ) : (
           <>
             <div className="card__ask">
-              <FigureGlyph figure={current} size={130} highlight={step} />
+              {variant === 'compose' ? (
+                <FigureGlyph figure={current} size={130} highlight={step} />
+              ) : (
+                <BuildTarget figure={current} />
+              )}
             </div>
             <p className="card__prompt">{step === 'lower' ? 'Какая триграмма снизу?' : 'Какая триграмма сверху?'}</p>
           </>

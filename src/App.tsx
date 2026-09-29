@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { Figure } from './data/types';
-import { type Deck, DECKS, deckById, isAvailable, modeDirections, withUnlocks } from './logic/decks';
+import { type Deck, DECKS, buildInputFor, deckById, isAvailable, modeDirections, withUnlocks } from './logic/decks';
 import {
   EMPTY_PROGRESS,
   type Progress,
@@ -11,8 +11,9 @@ import {
   levelOf,
 } from './logic/progress';
 import { type Answer, DIRECTIONS } from './logic/quiz';
-import { type Mode, type Settings, loadSettings, saveSettings } from './logic/settings';
+import { type BuildInput, type Mode, type Settings, loadSettings, saveSettings } from './logic/settings';
 import { ComposeScreen } from './screens/ComposeScreen';
+import { LineBuilderScreen } from './screens/LineBuilderScreen';
 import { type QuizConfig, QuizScreen } from './screens/QuizScreen';
 import { ResultScreen, type SessionSummary } from './screens/ResultScreen';
 import { StartScreen } from './screens/StartScreen';
@@ -20,6 +21,7 @@ import { StudyScreen } from './screens/StudyScreen';
 
 interface SessionStart {
   mode: Mode;
+  buildInput: BuildInput;
   deck: Deck;
   masteryBefore: number;
   unlockedBefore: string[];
@@ -37,11 +39,12 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'start' });
 
   const selectedDirections = DIRECTIONS.filter((d) => settings.directionIds.includes(d.id));
-  const directions = modeDirections(settings.mode, selectedDirections);
   const available = (d: Deck) => isAvailable(d, settings.mode, progress, settings.unlockAll);
   const selected = deckById(settings.deckId);
   // Если выбранная колода недоступна в текущем режиме — берём первую доступную
   const deck = available(selected) ? selected : DECKS.find(available)!;
+  const buildInput = buildInputFor(deck, settings.buildInput);
+  const directions = modeDirections(settings.mode, selectedDirections, buildInput);
 
   const updateSettings = (s: Settings) => {
     setSettings(s);
@@ -78,6 +81,7 @@ export default function App() {
       run: Date.now(),
       session: {
         mode: settings.mode,
+        buildInput,
         deck,
         masteryBefore: mastery(progress, deck.figures, directions),
         unlockedBefore: progress.unlocked,
@@ -119,17 +123,23 @@ export default function App() {
     case 'study':
       return <StudyScreen deck={screen.deck} onExit={() => setScreen({ name: 'start' })} />;
     case 'quiz': {
-      const SessionScreen = screen.session.mode === 'compose' ? ComposeScreen : QuizScreen;
-      return (
-        <SessionScreen
-          key={screen.run}
-          config={screen.config}
-          levelOf={level}
-          onAnswer={onAnswer}
-          onFinish={(answers) => finish(answers, screen.session)}
-          onExit={() => setScreen({ name: 'start' })}
-        />
-      );
+      const { mode, buildInput: input } = screen.session;
+      const props = {
+        config: screen.config,
+        levelOf: level,
+        onAnswer,
+        onFinish: (answers: Answer[]) => finish(answers, screen.session),
+        onExit: () => setScreen({ name: 'start' }),
+      };
+      if (mode === 'compose') return <ComposeScreen key={screen.run} variant="compose" {...props} />;
+      if (mode === 'build') {
+        return input === 'lines' ? (
+          <LineBuilderScreen key={screen.run} {...props} />
+        ) : (
+          <ComposeScreen key={screen.run} variant="build" {...props} />
+        );
+      }
+      return <QuizScreen key={screen.run} {...props} />;
     }
     case 'result':
       return (
