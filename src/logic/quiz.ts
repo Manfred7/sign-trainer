@@ -51,6 +51,15 @@ export const BUILD_LINES_DIRECTION: Direction = {
   prompt: 'Соберите по линиям',
 };
 
+/** Режим «Таблица», поиск клетки: по названию найти место гексаграммы в таблице 8×8 */
+export const GRID_DIRECTION: Direction = {
+  id: 'grid',
+  ask: 'name',
+  answer: 'image',
+  label: 'Поиск в таблице',
+  prompt: 'Где эта гексаграмма в таблице?',
+};
+
 export interface Question {
   figure: Figure;
   direction: Direction;

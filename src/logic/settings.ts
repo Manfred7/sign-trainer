@@ -1,6 +1,7 @@
 import { DIRECTIONS } from './quiz';
 
-export type Mode = 'quiz' | 'study' | 'compose' | 'build';
+export type Mode = 'quiz' | 'study' | 'compose' | 'build' | 'table';
+export type TableView = 'reference' | 'find';
 export type BuildInput = 'trigrams' | 'lines';
 
 export const MODES: { id: Mode; label: string }[] = [
@@ -8,6 +9,7 @@ export const MODES: { id: Mode; label: string }[] = [
   { id: 'study', label: 'Знакомство' },
   { id: 'compose', label: 'Состав' },
   { id: 'build', label: 'Сборка' },
+  { id: 'table', label: 'Таблица' },
 ];
 
 export interface Settings {
@@ -18,6 +20,7 @@ export interface Settings {
   /** Все колоды доступны сразу, без порога */
   unlockAll: boolean;
   buildInput: BuildInput;
+  tableView: TableView;
 }
 
 export const SESSION_LENGTHS = [10, 20, 40];
@@ -31,6 +34,7 @@ const DEFAULTS: Settings = {
   length: 20,
   unlockAll: false,
   buildInput: 'trigrams',
+  tableView: 'reference',
 };
 
 export function loadSettings(): Settings {
@@ -47,6 +51,7 @@ export function loadSettings(): Settings {
       length: SESSION_LENGTHS.includes(parsed.length ?? 0) ? parsed.length! : DEFAULTS.length,
       unlockAll: parsed.unlockAll === true,
       buildInput: parsed.buildInput === 'lines' ? 'lines' : 'trigrams',
+      tableView: parsed.tableView === 'find' ? 'find' : 'reference',
     };
   } catch {
     return DEFAULTS;

@@ -18,6 +18,7 @@ import { type QuizConfig, QuizScreen } from './screens/QuizScreen';
 import { ResultScreen, type SessionSummary } from './screens/ResultScreen';
 import { StartScreen } from './screens/StartScreen';
 import { StudyScreen } from './screens/StudyScreen';
+import { TableFindScreen, TableReferenceScreen } from './screens/TableScreen';
 
 interface SessionStart {
   mode: Mode;
@@ -30,6 +31,7 @@ interface SessionStart {
 type Screen =
   | { name: 'start' }
   | { name: 'study'; deck: Deck }
+  | { name: 'table' }
   | { name: 'quiz'; config: QuizConfig; run: number; session: SessionStart }
   | { name: 'result'; answers: Answer[]; summary: SessionSummary };
 
@@ -88,8 +90,11 @@ export default function App() {
       },
     });
 
-  const startDeck = () =>
-    settings.mode === 'study' ? setScreen({ name: 'study', deck }) : startQuiz(deck.figures, settings.length);
+  const startDeck = () => {
+    if (settings.mode === 'study') setScreen({ name: 'study', deck });
+    else if (settings.mode === 'table' && settings.tableView === 'reference') setScreen({ name: 'table' });
+    else startQuiz(deck.figures, settings.length);
+  };
 
   const retryMistakes = (figures: Figure[]) =>
     startQuiz(figures, Math.min(settings.length, Math.max(5, figures.length * 3)));
@@ -122,6 +127,8 @@ export default function App() {
       );
     case 'study':
       return <StudyScreen deck={screen.deck} onExit={() => setScreen({ name: 'start' })} />;
+    case 'table':
+      return <TableReferenceScreen onExit={() => setScreen({ name: 'start' })} />;
     case 'quiz': {
       const { mode, buildInput: input } = screen.session;
       const props = {
@@ -131,6 +138,7 @@ export default function App() {
         onFinish: (answers: Answer[]) => finish(answers, screen.session),
         onExit: () => setScreen({ name: 'start' }),
       };
+      if (mode === 'table') return <TableFindScreen key={screen.run} {...props} />;
       if (mode === 'compose') return <ComposeScreen key={screen.run} variant="compose" {...props} />;
       if (mode === 'build') {
         return input === 'lines' ? (

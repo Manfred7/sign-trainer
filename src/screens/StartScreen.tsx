@@ -3,7 +3,7 @@ import { TRIGRAMS } from '../data/trigrams';
 import { type Deck, DECKS, buildInputFor, isAvailable, modeDirections } from '../logic/decks';
 import { type Progress, UNLOCK_SHARE, mastery } from '../logic/progress';
 import { DIRECTIONS } from '../logic/quiz';
-import { type BuildInput, MODES, SESSION_LENGTHS, type Settings } from '../logic/settings';
+import { type BuildInput, MODES, SESSION_LENGTHS, type Settings, type TableView } from '../logic/settings';
 
 interface Props {
   settings: Settings;
@@ -22,7 +22,13 @@ const MODE_NOTES = {
   study: 'Листайте карточки со всеми представлениями знака, без проверки.',
   compose: 'Определите, из каких триграмм сложена гексаграмма: сначала нижнюю, потом верхнюю.',
   build: 'По названию и переводу соберите знак: из двух триграмм или по линиям.',
+  table: 'Все 64 гексаграммы в таблице 8×8: строки — нижняя триграмма, столбцы — верхняя.',
 } as const;
+
+const TABLE_VIEWS: { id: TableView; label: string }[] = [
+  { id: 'reference', label: 'Справочник' },
+  { id: 'find', label: 'Найди клетку' },
+];
 
 const BUILD_INPUTS: { id: BuildInput; label: string }[] = [
   { id: 'trigrams', label: 'Из триграмм' },
@@ -41,7 +47,13 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
   };
   const allOn = settings.directionIds.length === DIRECTIONS.length;
   const canStart = directions.length > 0;
-  const startLabel = mode === 'study' ? 'Смотреть' : 'Начать';
+  const tableReference = mode === 'table' && settings.tableView === 'reference';
+  const startText =
+    mode === 'table'
+      ? tableReference
+        ? 'Открыть таблицу'
+        : 'Начать поиск'
+      : `${mode === 'study' ? 'Смотреть' : 'Начать'}: ${deck.title}`;
 
   const reset = () => {
     if (window.confirm('Сбросить весь прогресс? Открытые колоды снова закроются.')) onResetProgress();
@@ -77,57 +89,83 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
         <p className="panel__note">{MODE_NOTES[mode]}</p>
       </section>
 
-      <section className="panel">
-        <div className="panel__head">
-          <h2>Колода</h2>
-          {(mode === 'quiz' || mode === 'build') && (
-            <button className="link" onClick={() => onChange({ ...settings, unlockAll: !settings.unlockAll })}>
-              {settings.unlockAll ? 'Открывать по порядку' : 'Открыть все'}
-            </button>
-          )}
-        </div>
-        <ul className="decks" role="radiogroup" aria-label="Колода">
-          {DECKS.map((d) => {
-            const open = isAvailable(d, mode, progress, settings.unlockAll);
-            const m = mastery(progress, d.figures, directionsFor(d));
-            const on = d.id === deck.id;
-            return (
-              <li key={d.id}>
-                <button
-                  role="radio"
-                  aria-checked={on}
-                  disabled={!open}
-                  className={`deck ${on ? 'is-on' : ''}`}
-                  onClick={() => onChange({ ...settings, deckId: d.id })}
-                >
-                  <span className="deck__main">
-                    <span className="deck__title">{d.title}</span>
-                    <span className="deck__sub">
-                      {open
-                        ? d.subtitle
-                        : mode === 'compose'
-                          ? 'Только для гексаграмм'
-                          : `Нужно ${pct(UNLOCK_SHARE)} в предыдущей`}
-                    </span>
-                  </span>
-                  {open && mode !== 'study' ? (
-                    <span className="deck__progress">
-                      <span className="deck__pct">{pct(m)}</span>
-                      <span className="bar bar--small">
-                        <span className="bar__fill" style={{ width: pct(m) }} />
+      {mode === 'table' && (
+        <section className="panel">
+          <h2>Вид</h2>
+          <div className="segmented segmented--2" role="radiogroup" aria-label="Вид таблицы">
+            {TABLE_VIEWS.map((v) => (
+              <button
+                key={v.id}
+                role="radio"
+                aria-checked={settings.tableView === v.id}
+                className={settings.tableView === v.id ? 'is-on' : ''}
+                onClick={() => onChange({ ...settings, tableView: v.id })}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <p className="panel__note">
+            {settings.tableView === 'reference'
+              ? 'Нажмите на клетку, чтобы открыть карточку знака.'
+              : `Клетки пустые — найдите знак по его триграммам. Освоено: ${pct(mastery(progress, deck.figures, directions))}.`}
+          </p>
+        </section>
+      )}
+
+      {mode !== 'table' && (
+        <section className="panel">
+          <div className="panel__head">
+            <h2>Колода</h2>
+            {(mode === 'quiz' || mode === 'build') && (
+              <button className="link" onClick={() => onChange({ ...settings, unlockAll: !settings.unlockAll })}>
+                {settings.unlockAll ? 'Открывать по порядку' : 'Открыть все'}
+              </button>
+            )}
+          </div>
+          <ul className="decks" role="radiogroup" aria-label="Колода">
+            {DECKS.map((d) => {
+              const open = isAvailable(d, mode, progress, settings.unlockAll);
+              const m = mastery(progress, d.figures, directionsFor(d));
+              const on = d.id === deck.id;
+              return (
+                <li key={d.id}>
+                  <button
+                    role="radio"
+                    aria-checked={on}
+                    disabled={!open}
+                    className={`deck ${on ? 'is-on' : ''}`}
+                    onClick={() => onChange({ ...settings, deckId: d.id })}
+                  >
+                    <span className="deck__main">
+                      <span className="deck__title">{d.title}</span>
+                      <span className="deck__sub">
+                        {open
+                          ? d.subtitle
+                          : mode === 'compose'
+                            ? 'Только для гексаграмм'
+                            : `Нужно ${pct(UNLOCK_SHARE)} в предыдущей`}
                       </span>
                     </span>
-                  ) : open ? null : (
-                    <span className="deck__lock" aria-hidden>
-                      🔒
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+                    {open && mode !== 'study' ? (
+                      <span className="deck__progress">
+                        <span className="deck__pct">{pct(m)}</span>
+                        <span className="bar bar--small">
+                          <span className="bar__fill" style={{ width: pct(m) }} />
+                        </span>
+                      </span>
+                    ) : open ? null : (
+                      <span className="deck__lock" aria-hidden>
+                        🔒
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {mode === 'build' && (
         <section className="panel">
@@ -174,7 +212,7 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
         </section>
       )}
 
-      {mode !== 'study' && (
+      {mode !== 'study' && !tableReference && (
         <section className="panel">
           <h2>Карточек за сессию</h2>
           <div className="segmented" role="radiogroup" aria-label="Карточек за сессию">
@@ -194,7 +232,7 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
       )}
 
       <button className="btn btn--primary btn--wide" disabled={!canStart} onClick={onStart}>
-        {startLabel}: {deck.title}
+        {startText}
       </button>
       {!canStart && <p className="hint">Выберите хотя бы одно направление</p>}
 

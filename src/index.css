@@ -719,6 +719,122 @@ input:focus-visible {
   grid-template-columns: repeat(2, 1fr);
 }
 
+/* Таблица 8×8 */
+.screen--wide {
+  max-width: 560px;
+}
+.table__title {
+  flex: 1;
+}
+.hexgrid {
+  display: grid;
+  grid-template-columns: minmax(40px, auto) repeat(8, minmax(0, 1fr));
+  gap: 3px;
+}
+.hexgrid__row {
+  display: contents;
+}
+.hexgrid__corner {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.5625rem;
+  color: var(--muted);
+  line-height: 1.2;
+  padding: 2px;
+}
+.hexgrid__corner span:first-child {
+  text-align: right;
+}
+.hexgrid__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  padding: 4px 0;
+  color: var(--ink);
+  min-width: 0;
+}
+.hexgrid__head span {
+  font-size: 0.5625rem;
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hexgrid__head--row {
+  justify-content: center;
+}
+.hexgrid__cell {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.hexgrid__cell:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+.hexgrid__cell:disabled {
+  cursor: default;
+}
+.hexgrid__num {
+  font-size: 0.5625rem;
+  line-height: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.hexgrid__cell--on {
+  border-color: var(--accent);
+  background: var(--bg);
+  color: var(--accent);
+}
+.hexgrid__cell--ok {
+  border-color: var(--ok);
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.hexgrid__cell--bad {
+  border-color: var(--bad);
+  background: var(--bad-bg);
+  color: var(--bad);
+  animation: shake 0.35s ease-in-out;
+}
+.table__detail {
+  min-height: 220px;
+}
+.table__ask {
+  min-height: 140px;
+  padding: 20px 16px 16px;
+  gap: 8px;
+}
+.table__ask .build-target__name {
+  font-size: 1.5rem;
+}
+.table__ask .build-target__meaning {
+  font-size: 1.0625rem;
+}
+
+@media (min-width: 480px) {
+  .hexgrid {
+    gap: 4px;
+  }
+  .hexgrid__num,
+  .hexgrid__head span,
+  .hexgrid__corner {
+    font-size: 0.6875rem;
+  }
+}
+
 /* ---------- Итоги ---------- */
 
 .result__score {

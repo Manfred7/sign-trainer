@@ -2,7 +2,7 @@ import { HEXAGRAMS } from '../data/hexagrams';
 import { TRIGRAMS } from '../data/trigrams';
 import type { Figure } from '../data/types';
 import { type Progress, UNLOCK_SHARE, mastery } from './progress';
-import { BUILD_DIRECTION, BUILD_LINES_DIRECTION, COMPOSE_DIRECTION, type Direction } from './quiz';
+import { BUILD_DIRECTION, BUILD_LINES_DIRECTION, COMPOSE_DIRECTION, type Direction, GRID_DIRECTION } from './quiz';
 import type { BuildInput, Mode } from './settings';
 
 export interface Deck {
@@ -61,6 +61,7 @@ export const isUnlocked = (deck: Deck, p: Progress, unlockAll: boolean) =>
  */
 export function isAvailable(deck: Deck, mode: Mode, p: Progress, unlockAll: boolean) {
   if (mode === 'study') return true;
+  if (mode === 'table') return deck.id === 'hex-all';
   if (mode === 'compose') return deck.id !== 'trigrams';
   return isUnlocked(deck, p, unlockAll);
 }
@@ -71,6 +72,7 @@ export const buildInputFor = (deck: Deck, input: BuildInput): BuildInput => (dec
 /** Направления, по которым считается освоение в режиме */
 export function modeDirections(mode: Mode, selected: Direction[], buildInput: BuildInput): Direction[] {
   if (mode === 'compose') return [COMPOSE_DIRECTION];
+  if (mode === 'table') return [GRID_DIRECTION];
   if (mode === 'build') return [buildInput === 'lines' ? BUILD_LINES_DIRECTION : BUILD_DIRECTION];
   return selected;
 }
