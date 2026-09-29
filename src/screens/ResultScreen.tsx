@@ -1,0 +1,66 @@
+import { FigureFull } from '../components/FacetView';
+import type { Figure } from '../data/types';
+import { type Answer, isCorrect } from '../logic/quiz';
+
+interface Props {
+  answers: Answer[];
+  onRetryMistakes: (figures: Figure[]) => void;
+  onRestart: () => void;
+  onMenu: () => void;
+}
+
+export function ResultScreen({ answers, onRetryMistakes, onRestart, onMenu }: Props) {
+  const right = answers.filter(isCorrect).length;
+  const pct = answers.length ? Math.round((right / answers.length) * 100) : 0;
+
+  const mistakes = new Map<string, { figure: Figure; count: number }>();
+  for (const a of answers) {
+    if (isCorrect(a)) continue;
+    const f = a.question.figure;
+    const entry = mistakes.get(f.id) ?? { figure: f, count: 0 };
+    entry.count++;
+    mistakes.set(f.id, entry);
+  }
+  const hardest = [...mistakes.values()].sort((a, b) => b.count - a.count);
+
+  return (
+    <main className="screen result">
+      <section className="result__score">
+        <div className="result__pct">{pct}%</div>
+        <p className="muted">
+          {right} из {answers.length} верно
+        </p>
+      </section>
+
+      {hardest.length > 0 ? (
+        <section className="panel">
+          <h2>Стоит повторить</h2>
+          <ul className="mistakes">
+            {hardest.map(({ figure, count }) => (
+              <li key={figure.id}>
+                <FigureFull figure={figure} glyphSize={44} />
+                <span className="mistakes__count">×{count}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <p className="result__perfect">Без ошибок</p>
+      )}
+
+      <div className="result__actions">
+        {hardest.length > 0 && (
+          <button className="btn btn--primary btn--wide" onClick={() => onRetryMistakes(hardest.map((m) => m.figure))}>
+            Повторить ошибки
+          </button>
+        )}
+        <button className={`btn btn--wide ${hardest.length ? '' : 'btn--primary'}`} onClick={onRestart}>
+          Ещё сессия
+        </button>
+        <button className="btn btn--ghost btn--wide" onClick={onMenu}>
+          В меню
+        </button>
+      </div>
+    </main>
+  );
+}
