@@ -2,6 +2,7 @@ import { FigureGlyph } from '../components/FigureGlyph';
 import { TRIGRAMS } from '../data/trigrams';
 import { type Deck, DECKS, buildInputFor, isAvailable, modeDirections } from '../logic/decks';
 import { type Progress, UNLOCK_SHARE, mastery } from '../logic/progress';
+import { useInstall } from '../logic/install';
 import { DIRECTIONS } from '../logic/quiz';
 import { type BuildInput, MODES, SESSION_LENGTHS, type Settings, type TableView } from '../logic/settings';
 
@@ -37,6 +38,7 @@ const BUILD_INPUTS: { id: BuildInput; label: string }[] = [
 
 export function StartScreen({ settings, progress, deck, onChange, onResetProgress, onStart }: Props) {
   const { mode } = settings;
+  const { canInstall, iosHint, install } = useInstall();
   const selectedDirections = DIRECTIONS.filter((d) => settings.directionIds.includes(d.id));
   const directionsFor = (d: Deck) => modeDirections(mode, selectedDirections, buildInputFor(d, settings.buildInput));
   const directions = directionsFor(deck);
@@ -235,6 +237,16 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
         {startText}
       </button>
       {!canStart && <p className="hint">Выберите хотя бы одно направление</p>}
+
+      {canInstall && (
+        <button className="btn btn--wide" onClick={install}>
+          Установить приложение
+        </button>
+      )}
+
+      {iosHint && (
+        <p className="hint">Чтобы установить на iPhone: «Поделиться» → «На экран „Домой“». Работает и без интернета.</p>
+      )}
 
       <button className="btn btn--ghost btn--small" onClick={reset}>
         Сбросить прогресс
