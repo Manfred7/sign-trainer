@@ -1,8 +1,6 @@
 import type { Figure } from '../data/types';
-import { type Answer, type Direction, isCorrect } from './quiz';
+import { type Answer, type Direction, MAX_LEVEL, isCorrect } from './quiz';
 
-/** Уровни Лейтнера: 0 — не знаю, 5 — знаю твёрдо */
-export const MAX_LEVEL = 5;
 /** С этого уровня пара (знак × направление) считается освоенной */
 export const MASTERED_LEVEL = 3;
 /** Доля освоенных пар, при которой открывается следующая колода */
@@ -26,10 +24,6 @@ const pairKey = (figureId: string, directionId: string) => `${figureId}:${direct
 
 export const levelOf = (p: Progress, figureId: string, directionId: string) =>
   p.pairs[pairKey(figureId, directionId)]?.level ?? 0;
-
-/** Слабые пары выпадают чаще: вес 6 у новой пары, 1 у выученной до конца */
-export const weightOf = (p: Progress, figureId: string, directionId: string) =>
-  MAX_LEVEL + 1 - levelOf(p, figureId, directionId);
 
 export function recordAnswer(p: Progress, a: Answer): Progress {
   const key = pairKey(a.question.figure.id, a.question.direction.id);

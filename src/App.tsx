@@ -8,7 +8,7 @@ import {
   mastery,
   recordAnswer,
   saveProgress,
-  weightOf,
+  levelOf,
 } from './logic/progress';
 import { type Answer, DIRECTIONS } from './logic/quiz';
 import { type Mode, type Settings, loadSettings, saveSettings } from './logic/settings';
@@ -66,8 +66,8 @@ export default function App() {
     [settings.directionIds],
   );
 
-  const weight = useCallback(
-    (figureId: string, directionId: string) => weightOf(progress, figureId, directionId),
+  const level = useCallback(
+    (figureId: string, directionId: string) => levelOf(progress, figureId, directionId),
     [progress],
   );
 
@@ -124,7 +124,7 @@ export default function App() {
         <SessionScreen
           key={screen.run}
           config={screen.config}
-          weight={weight}
+          levelOf={level}
           onAnswer={onAnswer}
           onFinish={(answers) => finish(answers, screen.session)}
           onExit={() => setScreen({ name: 'start' })}

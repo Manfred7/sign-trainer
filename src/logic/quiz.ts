@@ -1,4 +1,9 @@
+import { HEXAGRAMS } from '../data/hexagrams';
+import { TRIGRAMS } from '../data/trigrams';
 import type { Figure } from '../data/types';
+
+/** Уровни Лейтнера: 0 — не знаю, 5 — знаю твёрдо */
+export const MAX_LEVEL = 5;
 
 export type Facet = 'image' | 'name' | 'meaning';
 
@@ -54,7 +59,8 @@ export function shuffle<T>(items: T[]): T[] {
 
 const pick = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
 
-export type Weight = (figureId: string, directionId: string) => number;
+/** Уровень пары (знак × направление) по текущему прогрессу */
+export type LevelOf = (figureId: string, directionId: string) => number;
 
 /** Пока в сессии есть непоказанные знаки, спрашиваем из них — чтобы каждый выпал хотя бы раз */
 export function unseenFirst(pool: Figure[], answers: Answer[]): Figure[] {
@@ -63,26 +69,74 @@ export function unseenFirst(pool: Figure[], answers: Answer[]): Figure[] {
   return fresh.length ? fresh : pool;
 }
 
+const lineDiff = (a: Figure, b: Figure) => a.lines.filter((l, i) => l !== b.lines[i]).length;
+const isFlipOf = (a: Figure, b: Figure) => a.lines.join('') === [...b.lines].reverse().join('');
+const isSwapOf = (a: Figure, b: Figure) => a.kind === 'hexagram' && a.lower === b.upper && a.upper === b.lower;
+
 /**
- * pool — из каких фигур спрашивать, all — откуда брать неверные варианты.
- * Пара (фигура, направление) выбирается пропорционально весу.
+ * «Похожие» знаки — трудные неверные варианты, сложность растёт с уровнем пары:
+ * 0–1 — нет (варианты случайные), 2–3 — общая триграмма (у триграмм — отличие в одну линию),
+ * 4–5 — отличие в одну линию, знак вверх ногами, переставленные триграммы (11 ↔ 12, 63 ↔ 64).
+ */
+function similar(figure: Figure, level: number): Figure[] {
+  const universe = (figure.kind === 'trigram' ? TRIGRAMS : HEXAGRAMS).filter((f) => f.id !== figure.id);
+  if (level >= 4) {
+    return universe.filter((f) => lineDiff(figure, f) === 1 || isFlipOf(f, figure) || isSwapOf(f, figure));
+  }
+  if (level >= 2) {
+    return figure.kind === 'hexagram'
+      ? universe.filter((f) => f.lower === figure.lower || f.upper === figure.upper)
+      : universe.filter((f) => lineDiff(figure, f) === 1);
+  }
+  return [];
+}
+
+const facetText = (f: Figure, facet: Facet) =>
+  facet === 'name' ? f.name : facet === 'meaning' ? meaningText(f) : f.lines.join('');
+
+/**
+ * Неверные варианты: сначала похожие по уровню, затем из колоды, затем из всех знаков того же вида.
+ * Отбрасываются варианты, которые выглядят так же, как верный ответ (например, 10 Ли и 30 Ли).
+ */
+function pickDistractors(figure: Figure, deck: Figure[], level: number, answer: Facet, n: number): Figure[] {
+  const chosen: Figure[] = [];
+  const shown = new Set([facetText(figure, answer)]);
+  const take = (candidates: Figure[]) => {
+    for (const f of shuffle(candidates)) {
+      if (chosen.length >= n) return;
+      const text = facetText(f, answer);
+      if (shown.has(text)) continue;
+      shown.add(text);
+      chosen.push(f);
+    }
+  };
+  take(similar(figure, level));
+  take(deck);
+  take(figure.kind === 'trigram' ? TRIGRAMS : HEXAGRAMS);
+  return chosen;
+}
+
+/**
+ * pool — из каких фигур спрашивать, all — колода, откуда в первую очередь берутся неверные варианты.
+ * Пара (фигура, направление) выбирается с весом MAX_LEVEL + 1 − уровень: слабые пары выпадают чаще.
  * Одна фигура не выпадает дважды подряд, если в пуле есть из чего выбрать.
  */
 export function makeQuestion(
   pool: Figure[],
   all: Figure[],
   directions: Direction[],
-  weight: Weight,
+  levelOf: LevelOf,
   prevId?: string,
   optionCount = 4,
 ): Question {
   const figures = pool.length > 1 ? pool.filter((f) => f.id !== prevId) : pool;
   const pairs = figures.flatMap((figure) =>
-    directions.map((direction) => ({ figure, direction, w: weight(figure.id, direction.id) })),
+    directions.map((direction) => ({ figure, direction, w: MAX_LEVEL + 1 - levelOf(figure.id, direction.id) })),
   );
   let r = Math.random() * pairs.reduce((sum, p) => sum + p.w, 0);
   const { figure, direction } = pairs.find((p) => (r -= p.w) < 0) ?? pick(pairs);
 
-  const distractors = shuffle(all.filter((f) => f.id !== figure.id)).slice(0, optionCount - 1);
+  const level = levelOf(figure.id, direction.id);
+  const distractors = pickDistractors(figure, all, level, direction.answer, optionCount - 1);
   return { figure, direction, options: shuffle([figure, ...distractors]) };
 }

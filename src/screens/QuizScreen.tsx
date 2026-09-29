@@ -2,7 +2,7 @@ import { useCallback, useEffect, useReducer } from 'react';
 import { FacetView, FigureFull } from '../components/FacetView';
 import { SessionTop } from '../components/SessionTop';
 import type { Figure } from '../data/types';
-import { type Answer, type Direction, type Question, type Weight, makeQuestion, unseenFirst } from '../logic/quiz';
+import { type Answer, type Direction, type Question, type LevelOf, makeQuestion, unseenFirst } from '../logic/quiz';
 
 export interface QuizConfig {
   /** Из каких фигур спрашивать */
@@ -40,15 +40,15 @@ const AUTO_NEXT_MS = 800;
 interface Props {
   config: QuizConfig;
   /** Вес пары для планировщика; берётся из текущего прогресса */
-  weight: Weight;
+  levelOf: LevelOf;
   onAnswer: (answer: Answer) => void;
   onFinish: (answers: Answer[]) => void;
   onExit: () => void;
 }
 
-export function QuizScreen({ config, weight, onAnswer, onFinish, onExit }: Props) {
+export function QuizScreen({ config, levelOf, onAnswer, onFinish, onExit }: Props) {
   const [state, dispatch] = useReducer(reducer, config, (c) => ({
-    current: makeQuestion(c.pool, c.all, c.directions, weight),
+    current: makeQuestion(c.pool, c.all, c.directions, levelOf),
     pickedId: null,
     answers: [],
   }));
@@ -77,11 +77,11 @@ export function QuizScreen({ config, weight, onAnswer, onFinish, onExit }: Props
         unseenFirst(config.pool, answers),
         config.all,
         config.directions,
-        weight,
+        levelOf,
         current.figure.id,
       ),
     });
-  }, [answers, config, weight, current.figure.id, onFinish]);
+  }, [answers, config, levelOf, current.figure.id, onFinish]);
 
   useEffect(() => {
     if (!revealed || !correct) return;

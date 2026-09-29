@@ -5,7 +5,7 @@ import { SessionTop } from '../components/SessionTop';
 import { HEXAGRAMS } from '../data/hexagrams';
 import { TRIGRAMS, trigramById } from '../data/trigrams';
 import type { Figure } from '../data/types';
-import { type Answer, COMPOSE_DIRECTION, type Weight, makeQuestion, unseenFirst } from '../logic/quiz';
+import { type Answer, COMPOSE_DIRECTION, type LevelOf, makeQuestion, unseenFirst } from '../logic/quiz';
 import type { QuizConfig } from './QuizScreen';
 
 interface State {
@@ -47,15 +47,15 @@ const AUTO_NEXT_MS = 1000;
 
 interface Props {
   config: QuizConfig;
-  weight: Weight;
+  levelOf: LevelOf;
   onAnswer: (answer: Answer) => void;
   onFinish: (answers: Answer[]) => void;
   onExit: () => void;
 }
 
-export function ComposeScreen({ config, weight, onAnswer, onFinish, onExit }: Props) {
+export function ComposeScreen({ config, levelOf, onAnswer, onFinish, onExit }: Props) {
   const nextFigure = (prevId?: string) =>
-    makeQuestion(config.pool, config.all, [COMPOSE_DIRECTION], weight, prevId).figure;
+    makeQuestion(config.pool, config.all, [COMPOSE_DIRECTION], levelOf, prevId).figure;
 
   const [state, dispatch] = useReducer(reducer, null, () => ({
     current: nextFigure(),
@@ -86,10 +86,10 @@ export function ComposeScreen({ config, weight, onAnswer, onFinish, onExit }: Pr
     }
     dispatch({
       type: 'next',
-      figure: makeQuestion(unseenFirst(config.pool, answers), config.all, [COMPOSE_DIRECTION], weight, current.id)
+      figure: makeQuestion(unseenFirst(config.pool, answers), config.all, [COMPOSE_DIRECTION], levelOf, current.id)
         .figure,
     });
-  }, [answers, config, weight, current.id, onFinish]);
+  }, [answers, config, levelOf, current.id, onFinish]);
 
   useEffect(() => {
     if (!correct) return;
