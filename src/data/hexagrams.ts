@@ -70,7 +70,7 @@ const SOURCE: HexagramSource[] = [
   { number: 53, name: 'Цзянь', hanzi: '漸', meaning: ['Постепенность'], upper: 'xun', lower: 'gen' },
   { number: 54, name: 'Гуй мэй', hanzi: '歸妹', meaning: ['Приход девы'], upper: 'zhen', lower: 'dui' },
   { number: 55, name: 'Фэн', hanzi: '豐', meaning: ['Изобилие'], upper: 'zhen', lower: 'li' },
-  { number: 56, name: 'Люй', hanzi: '旅', meaning: ['Странствие'], upper: 'li', lower: 'gen' },
+  { number: 56, name: 'Люй', hanzi: '旅', meaning: ['Странствия'], upper: 'li', lower: 'gen' },
   { number: 57, name: 'Сюнь', hanzi: '巽', meaning: ['Проникновение'], upper: 'xun', lower: 'xun' },
   { number: 58, name: 'Дуй', hanzi: '兌', meaning: ['Проводимость'], upper: 'dui', lower: 'dui' },
   { number: 59, name: 'Хуань', hanzi: '渙', meaning: ['Рассеяние'], upper: 'xun', lower: 'kan' },
