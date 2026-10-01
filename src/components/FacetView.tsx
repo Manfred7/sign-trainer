@@ -16,7 +16,7 @@ export function FacetView({ figure, facet, glyphSize }: Props) {
     case 'image':
       return <FigureGlyph figure={figure} size={glyphSize} />;
     case 'name':
-      // У гексаграмм есть совпадающие названия (Ли 10 и 30, И 27 и 42…) — различаем иероглифом
+      // У гексаграмм есть совпадающие названия (Люй 10 и 56, И 27 и 42…) — различаем иероглифом
       return (
         <span className="facet-name">
           {figure.name}
