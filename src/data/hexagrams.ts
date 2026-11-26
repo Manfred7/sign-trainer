@@ -33,7 +33,7 @@ const SOURCE: HexagramSource[] = [
   { number: 16, name: 'Юй', hanzi: '豫', meaning: ['Довольство (воодушевление)'], upper: 'zhen', lower: 'kun' },
   { number: 17, name: 'Суй', hanzi: '隨', meaning: ['Следование'], upper: 'dui', lower: 'zhen' },
   { number: 18, name: 'Гу', hanzi: '蠱', meaning: ['Брожение (исправление испорченного)'], upper: 'gen', lower: 'xun' },
-  { number: 19, name: 'Линь', hanzi: '臨', meaning: ['Надзор'], upper: 'kun', lower: 'dui' },
+  { number: 19, name: 'Линь', hanzi: '臨', meaning: ['Надзор (подход)'], upper: 'kun', lower: 'dui' },
   { number: 20, name: 'Гуань', hanzi: '觀', meaning: ['Обзор'], upper: 'xun', lower: 'kun' },
   { number: 21, name: 'Ши хэ', hanzi: '噬嗑', meaning: ['Прокусывание'], upper: 'li', lower: 'zhen' },
   { number: 22, name: 'Би', hanzi: '賁', meaning: ['Красота'], upper: 'gen', lower: 'li' },
