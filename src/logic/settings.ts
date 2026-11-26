@@ -1,6 +1,6 @@
 import { DIRECTIONS } from './quiz';
 
-export type Mode = 'quiz' | 'study' | 'compose' | 'build' | 'table';
+export type Mode = 'quiz' | 'study' | 'compose' | 'build' | 'table' | 'lookup';
 export type TableView = 'reference' | 'find';
 export type BuildInput = 'trigrams' | 'lines';
 
@@ -10,6 +10,7 @@ export const MODES: { id: Mode; label: string }[] = [
   { id: 'compose', label: 'Состав' },
   { id: 'build', label: 'Сборка' },
   { id: 'table', label: 'Таблица' },
+  { id: 'lookup', label: 'Номер' },
 ];
 
 export interface Settings {

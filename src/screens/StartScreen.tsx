@@ -24,6 +24,7 @@ const MODE_NOTES = {
   compose: 'Определите, из каких триграмм сложена гексаграмма: сначала нижнюю, потом верхнюю.',
   build: 'По названию и переводу соберите знак: из двух триграмм или по линиям.',
   table: 'Все 64 гексаграммы в таблице 8×8: строки — нижняя триграмма, столбцы — верхняя.',
+  lookup: 'Введите номер от 1 до 64 — покажем гексаграмму, её название и перевод.',
 } as const;
 
 const TABLE_VIEWS: { id: TableView; label: string }[] = [
@@ -48,14 +49,17 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
     onChange({ ...settings, directionIds });
   };
   const allOn = settings.directionIds.length === DIRECTIONS.length;
-  const canStart = directions.length > 0;
+  // Направления выбираются только в тренировке; остальные режимы работают без них
+  const canStart = mode !== 'quiz' || directions.length > 0;
   const tableReference = mode === 'table' && settings.tableView === 'reference';
   const startText =
-    mode === 'table'
-      ? tableReference
-        ? 'Открыть таблицу'
-        : 'Начать поиск'
-      : `${mode === 'study' ? 'Смотреть' : 'Начать'}: ${deck.title}`;
+    mode === 'lookup'
+      ? 'Открыть'
+      : mode === 'table'
+        ? tableReference
+          ? 'Открыть таблицу'
+          : 'Начать поиск'
+        : `${mode === 'study' ? 'Смотреть' : 'Начать'}: ${deck.title}`;
 
   const reset = () => {
     if (window.confirm('Сбросить весь прогресс? Открытые колоды снова закроются.')) onResetProgress();
@@ -115,7 +119,7 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
         </section>
       )}
 
-      {mode !== 'table' && (
+      {mode !== 'table' && mode !== 'lookup' && (
         <section className="panel">
           <div className="panel__head">
             <h2>Колода</h2>
@@ -214,7 +218,7 @@ export function StartScreen({ settings, progress, deck, onChange, onResetProgres
         </section>
       )}
 
-      {mode !== 'study' && !tableReference && (
+      {mode !== 'study' && mode !== 'lookup' && !tableReference && (
         <section className="panel">
           <h2>Карточек за сессию</h2>
           <div className="segmented" role="radiogroup" aria-label="Карточек за сессию">

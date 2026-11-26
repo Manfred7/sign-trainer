@@ -17,6 +17,7 @@ import { LineBuilderScreen } from './screens/LineBuilderScreen';
 import { type QuizConfig, QuizScreen } from './screens/QuizScreen';
 import { ResultScreen, type SessionSummary } from './screens/ResultScreen';
 import { StartScreen } from './screens/StartScreen';
+import { LookupScreen } from './screens/LookupScreen';
 import { StudyScreen } from './screens/StudyScreen';
 import { TableFindScreen, TableReferenceScreen } from './screens/TableScreen';
 
@@ -32,6 +33,7 @@ type Screen =
   | { name: 'start' }
   | { name: 'study'; deck: Deck }
   | { name: 'table' }
+  | { name: 'lookup' }
   | { name: 'quiz'; config: QuizConfig; run: number; session: SessionStart }
   | { name: 'result'; answers: Answer[]; summary: SessionSummary };
 
@@ -92,6 +94,7 @@ export default function App() {
 
   const startDeck = () => {
     if (settings.mode === 'study') setScreen({ name: 'study', deck });
+    else if (settings.mode === 'lookup') setScreen({ name: 'lookup' });
     else if (settings.mode === 'table' && settings.tableView === 'reference') setScreen({ name: 'table' });
     else startQuiz(deck.figures, settings.length);
   };
@@ -129,6 +132,8 @@ export default function App() {
       return <StudyScreen deck={screen.deck} onExit={() => setScreen({ name: 'start' })} />;
     case 'table':
       return <TableReferenceScreen onExit={() => setScreen({ name: 'start' })} />;
+    case 'lookup':
+      return <LookupScreen onExit={() => setScreen({ name: 'start' })} />;
     case 'quiz': {
       const { mode, buildInput: input } = screen.session;
       const props = {

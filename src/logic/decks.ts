@@ -61,7 +61,7 @@ export const isUnlocked = (deck: Deck, p: Progress, unlockAll: boolean) =>
  */
 export function isAvailable(deck: Deck, mode: Mode, p: Progress, unlockAll: boolean) {
   if (mode === 'study') return true;
-  if (mode === 'table') return deck.id === 'hex-all';
+  if (mode === 'table' || mode === 'lookup') return deck.id === 'hex-all';
   if (mode === 'compose') return deck.id !== 'trigrams';
   return isUnlocked(deck, p, unlockAll);
 }
